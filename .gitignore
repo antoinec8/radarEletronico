@@ -1,0 +1,32 @@
+# Build directories
+build/
+build-*/
+
+# Zephyr
+.west/
+zephyr/
+bootloader/
+modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled files
+*.o
+*.a
+*.elf
+*.bin
+*.hex
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db
