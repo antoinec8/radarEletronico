@@ -139,27 +139,4 @@ west build -b mps2/an385
 west build -t run
 ```
 
-## 📈 Próximos Passos
-
-1. ✅ Compilar e executar o projeto
-2. ✅ Rodar os testes unitários
-3. ✅ Simular veículos com diferentes velocidades
-4. ✅ Experimentar com diferentes configurações no menuconfig
-5. ✅ Analisar os logs para entender o fluxo
-6. 📝 Fazer commits organizados no Git
-7. 🚀 Adicionar features extras (opcional)
-
-## 🎓 Conceitos Aprendidos
-
-- ✅ Multithreading no Zephyr (K_THREAD_DEFINE)
-- ✅ Comunicação inter-threads (k_msgq, ZBUS)
-- ✅ Interrupções GPIO
-- ✅ Máquina de estados
-- ✅ Kconfig para configuração
-- ✅ Testes unitários com ztest
-- ✅ Device Tree Overlays
-- ✅ Logging estruturado
-
----
-
 **Dúvidas?** Consulte o README.md completo!
