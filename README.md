@@ -1,26 +1,4 @@
-# Radar Eletrônico
-
-Projeto de sistema embarcado para radar eletrônico usando Zephyr RTOS.
-
-## Compilação
-
-```bash
-west build -b qemu_cortex_m3 -p
-```
-
-## Execução
-
-```bash
-west build -t run
-```
-
-## Estrutura do Projeto
-
-```
-radar_eletronico/
-├── CMakeLists.txt
-├── prj.conf
-├── # Radar Eletronico - Zephyr RTOS
+# Radar Eletronico - Zephyr RTOS
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 [![Platform](https://img.shields.io/badge/platform-mps2%2Fan385-blue.svg)]()

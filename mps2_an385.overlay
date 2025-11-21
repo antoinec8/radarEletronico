@@ -1,0 +1,15 @@
+/*
+ * Device Tree Overlay para mps2_an385
+ * Configura GPIOs para sensores do radar
+ */
+
+/ {
+	aliases {
+		radar-sensor1 = &gpio0;
+		radar-sensor2 = &gpio0;
+	};
+};
+
+&gpio0 {
+	status = "okay";
+};
