@@ -5,10 +5,6 @@
 [![Zephyr](https://img.shields.io/badge/zephyr-v4.2.0-blue.svg)]()
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)]()
 
-> **Status**: ✅ Sistema completo e funcional  
-> **Ultima atualizacao**: Nov 2024  
-> **Compilacao**: ✅ Sucesso (40KB FLASH, 12KB RAM)  
-> **Execucao**: ✅ Funcionando com simulacao automatica
 
 Sistema de radar eletronico simplificado implementado com Zephyr RTOS na plataforma emulada `mps2/an385`.
 
@@ -277,13 +273,8 @@ Os logs da thread de sensores mostram cada transição de estado:
 
 Projeto acadêmico - Sistemas Embarcados com Zephyr RTOS
 
-## 👨‍💻 Autor
+## 👨‍💻 Autores
 
-Desenvolvido como projeto de aprendizado de Zephyr RTOS, explorando conceitos avançados de sistemas embarcados.
-
+Desenvolvido como projeto da disciplina de Sistemas Embarcados por Antonio Carlos Freitas Lopes e Miriã da Silva Moreira.
 ---
 
-**Data de Entrega**: 25/11/2025
-└── src/
-    └── main.c
-```
