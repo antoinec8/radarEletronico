@@ -274,7 +274,8 @@ Os logs da thread de sensores mostram cada transição de estado:
 Projeto acadêmico - Sistemas Embarcados com Zephyr RTOS
 
 ## 👨‍💻 Autores
-
 Desenvolvido como projeto da disciplina de Sistemas Embarcados por Antonio Carlos Freitas Lopes e Miriã da Silva Moreira.
+
+
 ---
 
