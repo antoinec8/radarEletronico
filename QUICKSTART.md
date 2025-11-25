@@ -1,28 +1,35 @@
 # Guia de Início Rápido - Radar Eletrônico
 
-## ⚡ Quick Start
+## Quick Start
 
-### 1. Compilar
+### 1. Testar
+
+```powershell
+# Compilar os testes
+west build -b mps2/an385 -p auto tests
+
+# Executar os testes
+west build -t run
+
+# Voltar ao projeto principal
+west build -b mps2/an385 -p always
+```
+
+### 2. Compilar o Projeto
 
 ```powershell
 west build -b mps2/an385
 ```
 
-### 2. Executar
+### 3. Executar
 
 ```powershell
 west build -t run
 ```
 
-**Pronto!** O sistema possui simulação automática que gera veículos a cada 5 segundos.
+**Pronto!** O sistema possui simulação automática que gera veículos a cada 3 segundos.
 
-### 3. Testar
-
-```powershell
-west build -b mps2/an385 -t run -T tests
-```
-
-## 🎯 Comandos Úteis
+## Comandos Úteis
 
 ### Limpar Build
 
@@ -49,7 +56,7 @@ west build
 west build -t run
 ```
 
-## 🧪 Simulação
+## Simulação
 
 ### Simulação Automática (Embutida)
 
@@ -60,7 +67,7 @@ O sistema **já possui simulação automática**! Ao executar `west build -t run
 - 🔴 Veículo leve a 70 km/h (INFRAÇÃO) → Aciona câmera
 - 🔴 Veículo pesado a 50 km/h (INFRAÇÃO) → Aciona câmera
 
-Ciclo se repete a cada **5 segundos**.
+Um novo veículo aparece **3 segundos**.
 
 ### Script Python (Apenas Informativo)
 
@@ -73,11 +80,11 @@ python simulate_vehicle.py --type light --speed 70
 
 Como estamos usando QEMU com simulação automática, **não é necessário usar este script**!
 
-## 📊 O Que Observar
+## O Que Observar
 
 ### Veículos Simulados
 
-A cada 5 segundos você verá **4 detecções**:
+A cada 3 segundos você verá uma dessas **4 detecções**:
 
 1. **Leve 50 km/h** → 🟢 NORMAL (sem câmera)
 2. **Leve 56 km/h** → 🟡 ALERTA (sem câmera)
@@ -87,7 +94,11 @@ A cada 5 segundos você verá **4 detecções**:
 ### Câmera e Placas
 
 Quando há infração, a câmera é acionada e pode:
-- ✅ **82%** - Capturar placa válida Mercosul (Brasil, Argentina, Paraguai, Uruguai)
+- ✅ **82%** - Capturar placa válida Mercosul:
+  - Brasil (BR) (71.9%)
+  - Uruguai (UY) (13.7%)
+  - Argentina (AR) (7.2%)
+  - Paraguai (PY) (7.2%)
 - ❌ **9%** - Capturar placa formato inválido (rejeitada, não registra)
 - 🔴 **9%** - Falhar (erro ERR-16 mostrado em vermelho)
 
@@ -118,28 +129,4 @@ Quando há infração, a câmera é acionada e pode:
 west build -b mps2/an385 -p auto -T tests
 west build -t run
 ```
-
-## 📈 Próximos Passos
-
-1. ✅ Compilar: `west build -b mps2/an385`
-2. ✅ Executar: `west build -t run`
-3. ✅ Observar os 4 veículos simulados automaticamente
-4. ✅ Rodar testes: `west build -b mps2/an385 -t run -T tests`
-5. ✅ Experimentar menuconfig: `west build -t menuconfig`
-6. 📝 Analisar código-fonte em `src/`
-7. 🚀 Documentar funcionalidades no relatório
-
-## 🎓 Conceitos Aprendidos
-
-- ✅ Multithreading no Zephyr (K_THREAD_DEFINE)
-- ✅ Comunicação inter-threads (k_msgq, ZBUS)
-- ✅ Interrupções GPIO
-- ✅ Máquina de estados
-- ✅ Kconfig para configuração
-- ✅ Testes unitários com ztest
-- ✅ Device Tree Overlays
-- ✅ Logging estruturado
-
 ---
-
-**Dúvidas?** Consulte o README.md completo!

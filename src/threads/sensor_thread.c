@@ -263,7 +263,7 @@ void sensor_thread_entry(void *p1, void *p2, void *p3)
         /* Modo simulação: gera detecções automáticas para demonstração */
         int demo_count = 0;
         while (1) {
-            k_sleep(K_SECONDS(5));
+            k_sleep(K_SECONDS(3));
             
             switch (demo_count % 4) {
             case 0:

@@ -1,18 +1,8 @@
-# Radar Eletronico - Zephyr RTOS
-
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![Platform](https://img.shields.io/badge/platform-mps2%2Fan385-blue.svg)]()
-[![Zephyr](https://img.shields.io/badge/zephyr-v4.2.0-blue.svg)]()
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)]()
-
-> **Status**: ✅ Sistema completo e funcional  
-> **Ultima atualizacao**: Nov 2024  
-> **Compilacao**: ✅ Sucesso (40KB FLASH, 12KB RAM)  
-> **Execucao**: ✅ Funcionando com simulacao automatica
+# Radar Eletrônico - Zephyr
 
 Sistema de radar eletronico simplificado implementado com Zephyr RTOS na plataforma emulada `mps2/an385`.
 
-## 📋 Descricao do Projeto
+## Descrição do Projeto
 
 Este projeto simula um radar eletrônico capaz de:
 - ✅ Detectar passagem de veículos usando sensores magnéticos simulados (GPIOs)
@@ -23,7 +13,7 @@ Este projeto simula um radar eletrônico capaz de:
 - ✅ Capturar placas Mercosul simuladas em caso de infração
 - ✅ Validar placas e registrar infrações
 
-## 🏗️ Arquitetura
+## Arquitetura
 
 ### Threads
 
@@ -58,7 +48,7 @@ Estados:
 - **MEASURING_SPEED**: Medindo tempo entre sensor 1 e sensor 2
 - **COMPLETE**: Dados enviados, volta ao IDLE
 
-## ⚙️ Configurações (Kconfig)
+## Configurações (Kconfig)
 
 Todas configuráveis via `menuconfig`:
 
@@ -70,7 +60,7 @@ Todas configuráveis via `menuconfig`:
 | `CONFIG_RADAR_WARNING_THRESHOLD_PERCENT` | 90 | % do limite para alerta amarelo |
 | `CONFIG_RADAR_CAMERA_FAILURE_RATE_PERCENT` | 20 | Taxa de falha da câmera (0-100%) |
 
-## 🚀 Compilação e Execução
+## Compilação e Execução
 
 ### Pré-requisitos
 
@@ -78,41 +68,30 @@ Todas configuráveis via `menuconfig`:
 - West tool configurado
 - QEMU para emulação ARM
 
-### Compilar o Projeto
-
-```bash
-west build -b mps2/an385
-```
-
-### Executar no QEMU
-
-```bash
-west build -t run
-```
-
-**Nota**: O sistema possui **simulação automática** que gera veículos a cada 5 segundos:
-- Veículo leve a 50 km/h (NORMAL)
-- Veículo leve a 56 km/h (ALERTA)
-- Veículo leve a 70 km/h (INFRAÇÃO - aciona câmera)
-- Veículo pesado a 50 km/h (INFRAÇÃO)
-
-Não é necessário inserir comandos manualmente!
-
-### Configurar via Menuconfig
-
-```bash
-west build -t menuconfig
-```
-
-Navegue até "Configuração do Radar Eletrônico" para alterar os parâmetros.
-
-## 🧪 Testes
+## Testes
 
 ### Executar Testes Unitários
 
 ```bash
-west build -b mps2/an385 -t run -T tests
+# Compilar os testes
+west build -b mps2/an385 -p auto tests
+
+# Executar os testes
+west build -t run
 ```
+
+**IMPORTANTE**: Após rodar os testes, para voltar ao projeto principal:
+
+```bash
+# Opção 1: Recompilar do zero
+west build -b mps2/an385 -p always
+
+# Opção 2: Limpar build e recompilar
+Remove-Item -Recurse -Force build
+west build -b mps2/an385
+```
+
+**Total: 12 testes - todos passando** 
 
 ### Testes Implementados
 
@@ -128,19 +107,41 @@ west build -b mps2/an385 -t run -T tests
   - Placas inválidas (formato errado, tamanho)
   - Edge cases (NULL, caracteres especiais)
 
-**Total: 12 testes - todos passando** ✅
+## Executar o Projeto
 
-### Executar Todos os Testes com Twister
+### Compilar o Projeto
 
 ```bash
-west twister -T tests -p mps2/an385
+west build -b mps2/an385
 ```
 
-## 🎮 Simulação
+### Executar no QEMU
+
+```bash
+west build -t run
+```
+
+**Nota**: O sistema possui **simulação automática** que gera veículos a cada 3 segundos:
+- Veículo leve a 50 km/h (NORMAL)
+- Veículo leve a 56 km/h (ALERTA)
+- Veículo leve a 70 km/h (INFRAÇÃO - aciona câmera)
+- Veículo pesado a 50 km/h (INFRAÇÃO)
+
+Não é necessário inserir comandos manualmente!
+
+### Configurar via Menuconfig
+
+```bash
+west build -t menuconfig
+```
+
+Navegue até "Configuração do Radar Eletrônico" para alterar os parâmetros.
+
+## Simulação
 
 ### Simulação Automática (Padrão)
 
-O sistema possui **simulação automática embutida** que gera 4 veículos a cada 5 segundos:
+O sistema possui **simulação automática embutida** que gera veículos a cada 3 segundos:
 
 1. **Veículo leve a 50 km/h** → Status NORMAL (verde)
 2. **Veículo leve a 56 km/h** → Status ALERTA (amarelo)
@@ -158,13 +159,9 @@ python simulate_vehicle.py --type light --speed 70
 ```
 
 Ele calcula os timings corretos e gera comandos GPIO que você executaria manualmente.
-
 **Nota**: Como estamos usando QEMU com simulação automática, este script é apenas informativo.
-   ```
 
-**Nota**: Para facilitar a simulação, considere criar um script Python externo que se conecte ao QEMU via monitor interface.
-
-## 📊 Fórmulas e Lógica
+## Fórmulas e Lógica
 
 ### Cálculo de Velocidade
 
@@ -190,13 +187,42 @@ Exemplo:
 
 ### Validação de Placa Mercosul
 
-Formato: **ABC1D23**
-- Posições 0-2: Letras (A-Z)
-- Posição 3: Dígito (0-9)
-- Posição 4: Letra (A-Z)
-- Posições 5-6: Dígitos (0-9)
+O sistema valida placas dos 4 países do Mercosul com formatos diferentes:
 
-## 📁 Estrutura de Arquivos
+#### Brasil (BR): ABC1D23
+- **Formato**: 3 Letras + 1 Dígito + 1 Letra + 2 Dígitos
+- **Exemplo**: TEP9J01, VDX2C03
+- **Posições**:
+  - 0-2: Letras (A-Z)
+  - 3: Dígito (0-9)
+  - 4: Letra (A-Z)
+  - 5-6: Dígitos (0-9)
+
+#### Argentina (AR): AB123CD
+- **Formato**: 2 Letras + 3 Dígitos + 2 Letras
+- **Exemplo**: AC456FH, BD789KL
+- **Posições**:
+  - 0-1: Letras (A-Z)
+  - 2-4: Dígitos (0-9)
+  - 5-6: Letras (A-Z)
+
+#### Paraguai (PY): ABCD123
+- **Formato**: 4 Letras + 3 Dígitos
+- **Exemplo**: WXYZ456, KLMN789
+- **Posições**:
+  - 0-3: Letras (A-Z)
+  - 4-6: Dígitos (0-9)
+
+#### Uruguai (UY): ABC1234
+- **Formato**: 3 Letras + 4 Dígitos
+- **Exemplo**: FQN1875, ABC5678
+- **Posições**:
+  - 0-2: Letras (A-Z)
+  - 3-6: Dígitos (0-9)
+
+**Detecção Automática**: O sistema detecta automaticamente o país baseado no comprimento e padrão da placa.
+
+## Estrutura de Arquivos
 
 ```
 radar_eletronico/
@@ -222,7 +248,7 @@ radar_eletronico/
     └── test_plate_validator.c          # Testes de validação
 ```
 
-## 🎨 Feedback Visual
+## Feedback Visual
 
 O sistema usa códigos ANSI para cores no console:
 
@@ -231,32 +257,22 @@ O sistema usa códigos ANSI para cores no console:
 - 🔴 **Vermelho**: Infração (acima do limite)
 
 Exemplo de saída:
+
 ```
-╔════════════════════════════════════════╗
-║      RADAR ELETRÔNICO - DETECÇÃO      ║
-╠════════════════════════════════════════╣
-║ Tipo: LEVE                            ║
-║ Velocidade: 65 km/h                   ║  (em vermelho)
-║ Limite: 60 km/h                       ║
-║ Status: INFRAÇÃO                      ║  (em vermelho)
-╚════════════════════════════════════════╝
++========================================+
+|        RADAR ELETRONICO                |
++========================================+
+| Tipo:       LEVE                       |
+| Velocidade: 70 km/h                    |
+| Limite:     60 km/h                    |
+| Status:     INFRACAO                   |
+| Placa:      ABC1D23                    |
++========================================+
 
-✓ Placa registrada: ABC1D23
-✓ Infração arquivada com sucesso!
+>>> INFRACAO REGISTRADA - Placa: ABC1D23 <<<
 ```
 
-## 🛠️ Boas Práticas Implementadas
-
-1. **Separação de Responsabilidades**: Cada thread tem uma função específica
-2. **Funções Puras**: Cálculos em funções testáveis sem efeitos colaterais
-3. **Comunicação Assíncrona**: ZBUS para desacoplamento
-4. **Tratamento de Erros**: Timeouts, validações e verificações de retorno
-5. **Documentação**: Comentários Doxygen em todas as funções
-6. **Testes Automatizados**: Cobertura de funções críticas com ztest
-7. **Configurabilidade**: Kconfig para parâmetros ajustáveis
-8. **Logs Estruturados**: Níveis de log apropriados (DBG, INF, WRN, ERR)
-
-## 🔍 Debugging
+## Debugging
 
 ### Habilitar Logs Detalhados
 
@@ -267,35 +283,16 @@ CONFIG_LOG_DEFAULT_LEVEL=4  # Debug level
 
 ### Visualizar Estado dos Sensores
 
-Os logs da thread de sensores mostram cada transição de estado:
+Os logs mostram as detecções:
 ```
-[DBG] SENSOR1: Primeiro eixo detectado
-[DBG] SENSOR1: Eixo 2 detectado
-[DBG] SENSOR2: Veículo detectado, iniciando medição
-[INF] === Detecção Completa ===
-[INF] Eixos: 2
-[INF] Tempo: 72 ms
+[00:00:15.234,000] <wrn> main: *** INFRACAO DETECTADA! Acionando camera... ***
+[00:00:15.234,000] <inf> camera_thread: === CAPTURA INICIADA ===
+[00:00:15.297,000] <inf> camera_thread: Placa capturada: ABC1D23 (Brasil)
+[00:00:15.297,000] <wrn> main: >>> INFRACAO REGISTRADA - Placa: ABC1D23 <<<
 ```
 
-## 🎯 Critérios de Avaliação Atendidos
+## Autores
 
-- ✅ **Qualidade de Código**: Modular, comentado, seguindo convenções
-- ✅ **Criatividade**: Máquina de estados, feedback visual colorido, simulação de falhas
-- ✅ **Testes Automáticos**: Suite completa com ztest
-- ✅ **Uso do Zephyr**: Multithreading, Kconfig, GPIO, Display, ZBUS
-- ✅ **Git**: Commits organizados com mensagens descritivas
-
-## 📝 Licença
-
-Projeto acadêmico - Sistemas Embarcados com Zephyr RTOS
-
-## 👨‍💻 Autor
-
-Desenvolvido como projeto de aprendizado de Zephyr RTOS, explorando conceitos avançados de sistemas embarcados.
+Projeto desenvolvido junto a disciplina de Sistemas Embarcados por Antonio Carlos Freitas Lopes e Miriã da Silva Moreira.
 
 ---
-
-**Data de Entrega**: 25/11/2025
-└── src/
-    └── main.c
-```
