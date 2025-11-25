@@ -5,8 +5,7 @@
 ### 1. Compilar
 
 ```powershell
-cd c:\zephyrproject\radar_eletronico
-west build -b mps2/an385 -p auto
+west build -b mps2/an385
 ```
 
 ### 2. Executar
@@ -15,12 +14,12 @@ west build -b mps2/an385 -p auto
 west build -t run
 ```
 
+**Pronto!** O sistema possui simulação automática que gera veículos a cada 5 segundos.
+
 ### 3. Testar
 
 ```powershell
-cd tests
-west build -b mps2/an385 -p auto
-west build -t run
+west build -b mps2/an385 -t run -T tests
 ```
 
 ## 🎯 Comandos Úteis
@@ -50,104 +49,85 @@ west build
 west build -t run
 ```
 
-## 🧪 Simulação Rápida
+## 🧪 Simulação
 
-### Usando Python Script
+### Simulação Automática (Embutida)
+
+O sistema **já possui simulação automática**! Ao executar `west build -t run`, você verá:
+
+- 🟢 Veículo leve a 50 km/h (NORMAL)
+- 🟡 Veículo leve a 56 km/h (ALERTA)
+- 🔴 Veículo leve a 70 km/h (INFRAÇÃO) → Aciona câmera
+- 🔴 Veículo pesado a 50 km/h (INFRAÇÃO) → Aciona câmera
+
+Ciclo se repete a cada **5 segundos**.
+
+### Script Python (Apenas Informativo)
+
+O script `simulate_vehicle.py` é útil apenas se você tiver **hardware físico**:
 
 ```powershell
-# Veículo leve a 50 km/h
-python simulate_vehicle.py --type light --speed 50
-
-# Veículo pesado a 70 km/h
-python simulate_vehicle.py --type heavy --speed 70
-```
-
-### Manual (Monitor QEMU)
-
-1. Execute: `west build -t run`
-2. Pressione `Ctrl+A` depois `C`
-3. Digite os comandos mostrados pelo script
-
-## 📊 Cenários de Teste
-
-### Cenário 1: Velocidade Normal (Verde)
-
-```python
-# Leve a 50 km/h (limite: 60)
-python simulate_vehicle.py --type light --speed 50
-```
-
-**Resultado Esperado**: Display verde, sem infração
-
-### Cenário 2: Velocidade de Alerta (Amarelo)
-
-```python
-# Leve a 56 km/h (90% de 60 = 54)
-python simulate_vehicle.py --type light --speed 56
-```
-
-**Resultado Esperado**: Display amarelo, sem infração
-
-### Cenário 3: Infração (Vermelho)
-
-```python
-# Leve a 70 km/h (limite: 60)
+# Calcula timings para hardware real
 python simulate_vehicle.py --type light --speed 70
 ```
 
-**Resultado Esperado**: Display vermelho, câmera acionada, placa capturada
+Como estamos usando QEMU com simulação automática, **não é necessário usar este script**!
 
-### Cenário 4: Veículo Pesado
+## 📊 O Que Observar
 
-```python
-# Pesado a 50 km/h (limite: 40)
-python simulate_vehicle.py --type heavy --speed 50
-```
+### Veículos Simulados
 
-**Resultado Esperado**: Display vermelho (infração para pesado)
+A cada 5 segundos você verá **4 detecções**:
+
+1. **Leve 50 km/h** → 🟢 NORMAL (sem câmera)
+2. **Leve 56 km/h** → 🟡 ALERTA (sem câmera)
+3. **Leve 70 km/h** → 🔴 INFRAÇÃO (aciona câmera, captura placa)
+4. **Pesado 50 km/h** → 🔴 INFRAÇÃO (aciona câmera, captura placa)
+
+### Câmera e Placas
+
+Quando há infração, a câmera é acionada e pode:
+- ✅ **82%** - Capturar placa válida Mercosul (Brasil, Argentina, Paraguai, Uruguai)
+- ❌ **9%** - Capturar placa formato inválido (rejeitada, não registra)
+- 🔴 **9%** - Falhar (erro ERR-16 mostrado em vermelho)
 
 ## 🔧 Troubleshooting
 
 ### Erro de Compilação
 
-**Problema**: `GPIO device not ready`
+**Problema**: `camera_service not found`
 
-**Solução**: Verifique se o overlay está sendo carregado:
+**Solução**: Verifique se o módulo externo está no lugar correto:
 ```powershell
-west build -b mps2/an385 -p auto -- -DDTC_OVERLAY_FILE=mps2_an385.overlay
+# Estrutura esperada:
+# c:\zephyrproject\camera_service\camera_service\
 ```
 
-### Sem Output
+### Display Desalinhado
 
-**Problema**: Nenhuma mensagem aparece
+**Problema**: Bordas do quadrado tortas
 
-**Solução**: Habilite logs imediatos no `prj.conf`:
-```
-CONFIG_LOG_MODE_IMMEDIATE=y
-```
+**Solução**: Use terminal com suporte a ANSI (PowerShell, Windows Terminal)
 
 ### Testes Falham
 
 **Problema**: Testes não passam
 
 **Solução**: 
-1. Verifique se está no diretório `tests/`
-2. Recompile do zero:
 ```powershell
-Remove-Item -Recurse -Force build
-west build -b mps2/an385
+west build -b mps2/an385 -p auto -T tests
 west build -t run
 ```
 
 ## 📈 Próximos Passos
 
-1. ✅ Compilar e executar o projeto
-2. ✅ Rodar os testes unitários
-3. ✅ Simular veículos com diferentes velocidades
-4. ✅ Experimentar com diferentes configurações no menuconfig
-5. ✅ Analisar os logs para entender o fluxo
-6. 📝 Fazer commits organizados no Git
-7. 🚀 Adicionar features extras (opcional)
+1. ✅ Compilar: `west build -b mps2/an385`
+2. ✅ Executar: `west build -t run`
+3. ✅ Observar os 4 veículos simulados automaticamente
+4. ✅ Rodar testes: `west build -b mps2/an385 -t run -T tests`
+5. ✅ Experimentar menuconfig: `west build -t menuconfig`
+6. 📝 Analisar código-fonte em `src/`
+7. 🚀 Documentar funcionalidades no relatório
 
 ## 🎓 Conceitos Aprendidos
 

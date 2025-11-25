@@ -30,8 +30,31 @@ LOG_MODULE_REGISTER(sensor_thread, LOG_LEVEL_DBG);
 #define SENSOR1_PIN 5  /* Sensor magnético 1 (conta eixos) */
 #define SENSOR2_PIN 6  /* Sensor magnético 2 (marca fim) */
 
-/* Timeouts */
-#define AXLE_TIMEOUT_MS 2000  /* Timeout entre eixos do mesmo veículo */
+/* Timeouts dinâmicos */
+#define MIN_SPEED_KMH 60          /* Velocidade mínima esperada: 60 km/h */
+#define MAX_SPEED_KMH 120         /* Velocidade máxima esperada: 120 km/h */
+#define TYPICAL_AXLE_DISTANCE_MM 2700  /* Distância típica entre eixos: 2.7m */
+#define SAFETY_MARGIN_MS 500      /* Margem de segurança: 500ms */
+
+/**
+ * @brief Calcula timeout dinâmico baseado na velocidade esperada
+ * 
+ * Para separar veículos próximos, precisamos de um timeout que considere
+ * a velocidade. Um veículo a 100 km/h percorre ~27.8 m/s. Com eixos a
+ * 2.7m de distância, o tempo entre eixos seria ~97ms.
+ * 
+ * Usamos a velocidade MÍNIMA esperada para definir o timeout máximo:
+ * - A 60 km/h: timeout = (2700mm × 3600) / (60 × 1000) + 500ms ≈ 662ms
+ * - A 120 km/h: timeout seria ~331ms, mas usamos MIN_SPEED para segurança
+ * 
+ * @return Timeout em milissegundos
+ */
+static inline uint32_t calculate_axle_timeout_ms(void)
+{
+    /* Calcula baseado na velocidade mínima (maior timeout) */
+    uint32_t timeout = (TYPICAL_AXLE_DISTANCE_MM * 3600) / (MIN_SPEED_KMH * 1000);
+    return timeout + SAFETY_MARGIN_MS;
+}
 
 /* Variáveis da máquina de estados */
 static sensor_state_t current_state = SENSOR_STATE_IDLE;
@@ -53,6 +76,7 @@ static void sensor1_callback(const struct device *dev, struct gpio_callback *cb,
                              uint32_t pins)
 {
     int64_t now = k_uptime_get();
+    uint32_t timeout_ms = calculate_axle_timeout_ms();
     
     switch (current_state) {
     case SENSOR_STATE_IDLE:
@@ -66,15 +90,15 @@ static void sensor1_callback(const struct device *dev, struct gpio_callback *cb,
         
     case SENSOR_STATE_COUNTING_AXLES:
         /* Verifica se não foi timeout */
-        if ((now - last_axle_time) > AXLE_TIMEOUT_MS) {
-            /* Timeout - recomeça contagem */
-            LOG_WRN("SENSOR1: Timeout entre eixos, reiniciando");
+        if ((now - last_axle_time) > timeout_ms) {
+            /* Timeout - recomeça contagem (novo veículo) */
+            LOG_WRN("SENSOR1: Timeout (%u ms) entre eixos, novo veículo detectado", timeout_ms);
             axle_count = 1;
             sensor1_last_trigger = now;
         } else {
             /* Mais um eixo do mesmo veículo */
             axle_count++;
-            LOG_DBG("SENSOR1: Eixo %d detectado", axle_count);
+            LOG_DBG("SENSOR1: Eixo %d detectado (Δt=%lld ms)", axle_count, now - last_axle_time);
             sensor1_last_trigger = now;
         }
         last_axle_time = now;
@@ -211,10 +235,6 @@ static void simulate_vehicle_detection(vehicle_type_t type, uint32_t speed_kmh)
     uint32_t time_delta = (CONFIG_RADAR_SENSOR_DISTANCE_MM * 3600) / (speed_kmh * 1000);
     uint8_t axles = (type == VEHICLE_TYPE_LIGHT) ? 2 : 3;
     
-    LOG_INF("=== SIMULACAO: Veiculo detectado ===");
-    LOG_INF("Tipo: %s, Velocidade: %u km/h", 
-            type == VEHICLE_TYPE_LIGHT ? "LEVE" : "PESADO", speed_kmh);
-    
     sensor_data_msg_t msg = {
         .time_delta_ms = time_delta,
         .vehicle_type = type,
@@ -247,19 +267,15 @@ void sensor_thread_entry(void *p1, void *p2, void *p3)
             
             switch (demo_count % 4) {
             case 0:
-                LOG_INF("\n>>> Simulando: Veiculo LEVE a 50 km/h (Normal)");
                 simulate_vehicle_detection(VEHICLE_TYPE_LIGHT, 50);
                 break;
             case 1:
-                LOG_INF("\n>>> Simulando: Veiculo LEVE a 56 km/h (Alerta)");
                 simulate_vehicle_detection(VEHICLE_TYPE_LIGHT, 56);
                 break;
             case 2:
-                LOG_INF("\n>>> Simulando: Veiculo LEVE a 70 km/h (Infracao)");
                 simulate_vehicle_detection(VEHICLE_TYPE_LIGHT, 70);
                 break;
             case 3:
-                LOG_INF("\n>>> Simulando: Veiculo PESADO a 50 km/h (Infracao)");
                 simulate_vehicle_detection(VEHICLE_TYPE_HEAVY, 50);
                 break;
             }
@@ -269,12 +285,15 @@ void sensor_thread_entry(void *p1, void *p2, void *p3)
     
     /* Loop principal: verifica timeout de eixos (apenas se GPIO disponível) */
     while (1) {
-        k_sleep(K_MSEC(500));
+        k_sleep(K_MSEC(100));  /* Verifica a cada 100ms para melhor precisão */
         
         if (current_state == SENSOR_STATE_COUNTING_AXLES) {
             int64_t now = k_uptime_get();
-            if ((now - last_axle_time) > AXLE_TIMEOUT_MS) {
-                LOG_WRN("Timeout na contagem de eixos, resetando estado");
+            uint32_t timeout_ms = calculate_axle_timeout_ms();
+            
+            if ((now - last_axle_time) > timeout_ms) {
+                LOG_WRN("Timeout dinâmico (%u ms) na contagem de eixos, resetando estado", 
+                        timeout_ms);
                 current_state = SENSOR_STATE_IDLE;
                 axle_count = 0;
             }

@@ -2,7 +2,7 @@ common:
   tags:
     - radar
     - tests
-  platform_allow: qemu_cortex_m3
+  platform_allow: mps2/an385
 tests:
   radar.unit_tests:
     tags: unit_test

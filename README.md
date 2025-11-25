@@ -81,8 +81,7 @@ Todas configuráveis via `menuconfig`:
 ### Compilar o Projeto
 
 ```bash
-cd c:\zephyrproject\radar_eletronico
-west build -b mps2/an385 -p auto
+west build -b mps2/an385
 ```
 
 ### Executar no QEMU
@@ -90,6 +89,14 @@ west build -b mps2/an385 -p auto
 ```bash
 west build -t run
 ```
+
+**Nota**: O sistema possui **simulação automática** que gera veículos a cada 5 segundos:
+- Veículo leve a 50 km/h (NORMAL)
+- Veículo leve a 56 km/h (ALERTA)
+- Veículo leve a 70 km/h (INFRAÇÃO - aciona câmera)
+- Veículo pesado a 50 km/h (INFRAÇÃO)
+
+Não é necessário inserir comandos manualmente!
 
 ### Configurar via Menuconfig
 
@@ -104,23 +111,24 @@ Navegue até "Configuração do Radar Eletrônico" para alterar os parâmetros.
 ### Executar Testes Unitários
 
 ```bash
-cd tests
-west build -b mps2/an385 -p auto
-west build -t run
+west build -b mps2/an385 -t run -T tests
 ```
 
 ### Testes Implementados
 
-- ✅ **test_calculations.c**: Testa funções de cálculo
+- ✅ **test_calculations.c**: Testa funções de cálculo (5 testes)
   - Cálculo de velocidade (casos normais e edge cases)
   - Classificação de veículos
   - Determinação de status (normal/alerta/infração)
   - Seleção de limites
 
-- ✅ **test_plate_validator.c**: Testa validação de placas
-  - Placas válidas no formato Mercosul (ABC1D23)
+- ✅ **test_plate_validator.c**: Testa validação de placas Mercosul (7 testes)
+  - Placas válidas Brasil (ABC1D23), Argentina (AB123CD)
+  - Placas válidas Paraguai (ABCD123), Uruguai (ABC1234)
   - Placas inválidas (formato errado, tamanho)
   - Edge cases (NULL, caracteres especiais)
+
+**Total: 12 testes - todos passando** ✅
 
 ### Executar Todos os Testes com Twister
 
@@ -128,26 +136,30 @@ west build -t run
 west twister -T tests -p mps2/an385
 ```
 
-## 🎮 Simulação Manual
+## 🎮 Simulação
 
-Para testar manualmente, você pode simular pulsos nos GPIOs usando o monitor QEMU:
+### Simulação Automática (Padrão)
 
-1. Execute o projeto: `west build -t run`
-2. No console QEMU, pressione `Ctrl+A` depois `C` para acessar o monitor
-3. Simule pulsos:
-   ```
-   # Simular veículo leve (2 eixos) a 50 km/h
-   # Sensor 1 - Eixo 1
-   qom-set /machine/gpio gpio5 1
-   qom-set /machine/gpio gpio5 0
-   
-   # Sensor 1 - Eixo 2
-   qom-set /machine/gpio gpio5 1
-   qom-set /machine/gpio gpio5 0
-   
-   # Sensor 2 (após ~72ms para 50 km/h)
-   qom-set /machine/gpio gpio6 1
-   qom-set /machine/gpio gpio6 0
+O sistema possui **simulação automática embutida** que gera 4 veículos a cada 5 segundos:
+
+1. **Veículo leve a 50 km/h** → Status NORMAL (verde)
+2. **Veículo leve a 56 km/h** → Status ALERTA (amarelo)
+3. **Veículo leve a 70 km/h** → Status INFRAÇÃO (vermelho) + câmera
+4. **Veículo pesado a 50 km/h** → Status INFRAÇÃO (vermelho) + câmera
+
+Basta executar `west build -t run` e observar!
+
+### Script Python (Hardware Real)
+
+O script `simulate_vehicle.py` é útil apenas para **hardware físico** com sensores GPIO reais:
+
+```bash
+python simulate_vehicle.py --type light --speed 70
+```
+
+Ele calcula os timings corretos e gera comandos GPIO que você executaria manualmente.
+
+**Nota**: Como estamos usando QEMU com simulação automática, este script é apenas informativo.
    ```
 
 **Nota**: Para facilitar a simulação, considere criar um script Python externo que se conecte ao QEMU via monitor interface.

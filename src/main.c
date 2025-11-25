@@ -13,6 +13,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/zbus/zbus.h>
+#include <string.h>
 #include "types.h"
 #include "utils/calculations.h"
 #include "utils/plate_validator.h"
@@ -50,7 +51,7 @@ static void process_vehicle_detection(const sensor_data_msg_t *sensor_data)
     uint32_t speed = calculate_speed_kmh(sensor_data->time_delta_ms, 
                                           CONFIG_RADAR_SENSOR_DISTANCE_MM);
     
-    /* Determina limite aplicável */
+    /* Determina limite aplicavel */
     uint32_t limit = get_speed_limit(sensor_data->vehicle_type,
                                       CONFIG_RADAR_SPEED_LIMIT_LIGHT_KMH,
                                       CONFIG_RADAR_SPEED_LIMIT_HEAVY_KMH);
@@ -59,20 +60,19 @@ static void process_vehicle_detection(const sensor_data_msg_t *sensor_data)
     speed_status_t status = determine_speed_status(speed, limit, 
                                                      CONFIG_RADAR_WARNING_THRESHOLD_PERCENT);
     
-    LOG_INF("=== PROCESSAMENTO ===");
-    LOG_INF("Velocidade calculada: %u km/h", speed);
-    LOG_INF("Limite aplicável: %u km/h", limit);
-    LOG_INF("Status: %d", status);
-    
     /* Envia para display */
     display_data_msg_t display_msg = {
         .speed_kmh = speed,
         .vehicle_type = sensor_data->vehicle_type,
         .status = status,
-        .speed_limit = limit
+        .speed_limit = limit,
+        .plate = {0}  /* Inicializa vazio */
     };
     
     k_msgq_put(&display_msgq, &display_msg, K_NO_WAIT);
+    
+    /* Pequeno delay para display processar primeiro */
+    k_msleep(50);
     
     /* Se infracao, aciona camera */
     if (status == SPEED_STATUS_VIOLATION) {
@@ -96,11 +96,20 @@ static void process_vehicle_detection(const sensor_data_msg_t *sensor_data)
                 
                 if (zbus_chan_read(chan, &result, K_MSEC(100)) == 0) {
                     if (result.valid) {
-                        LOG_INF("OK Placa registrada: %s", result.plate);
-                        LOG_INF("OK Infracao arquivada com sucesso!");
+                        /* Placa valida: atualiza display e registra */
+                        strncpy(display_msg.plate, result.plate, sizeof(display_msg.plate) - 1);
+                        k_msgq_put(&display_msgq, &display_msg, K_NO_WAIT);
+                        k_msleep(50);
+                        LOG_WRN(">>> INFRACAO REGISTRADA - Placa: %s <<<", result.plate);
+                    } else if (strncmp(result.plate, "ERR", 3) == 0) {
+                        /* Erro de camera: atualiza display com codigo de erro */
+                        strncpy(display_msg.plate, result.plate, sizeof(display_msg.plate) - 1);
+                        k_msgq_put(&display_msgq, &display_msg, K_NO_WAIT);
+                        k_msleep(50);
+                        LOG_ERR(">>> Falha na camera: %s <<<", result.plate);
                     } else {
-                        LOG_ERR("X Falha na captura da placa: %s", result.plate);
-                        LOG_ERR("X Placa invalida - infracao nao registrada");
+                        /* Placa formato invalido: apenas loga, NAO atualiza display */
+                        LOG_ERR(">>> INFRACAO NAO REGISTRADA - Placa formato invalido <<<");
                     }
                 }
             } else {
@@ -114,9 +123,9 @@ int main(void)
 {
     sensor_data_msg_t sensor_msg;
     
-    LOG_INF("╔════════════════════════════════════════╗");
-    LOG_INF("║   RADAR ELETRONICO - INICIALIZANDO    ║");
-    LOG_INF("╚════════════════════════════════════════╝");
+    LOG_INF("+========================================+");
+    LOG_INF("|   RADAR ELETRONICO - INICIALIZANDO    |");
+    LOG_INF("+========================================+");
     
     LOG_INF("Configuracoes:");
     LOG_INF("  - Distancia entre sensores: %d mm", CONFIG_RADAR_SENSOR_DISTANCE_MM);

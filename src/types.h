@@ -61,6 +61,7 @@ typedef struct {
     vehicle_type_t vehicle_type;  /**< Tipo de veículo */
     speed_status_t status;        /**< Status da velocidade */
     uint32_t speed_limit;         /**< Limite aplicável */
+    char plate[8];                /**< Placa capturada (vazio se não for infração) */
 } display_data_msg_t;
 
 /**

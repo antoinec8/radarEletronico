@@ -79,28 +79,64 @@ static void display_data(const display_data_msg_t *data)
     /* Monta a mensagem formatada */
     char display_buffer[700];
     
-    snprintf(display_buffer, sizeof(display_buffer),
-             "\n"
-             "+========================================+\n"
-             "|      RADAR ELETRONICO - DETECCAO      |\n"
-             "+========================================+\n"
-             "| Tipo: %-8s                      |\n"
-             "| Velocidade: %s%s%3u km/h%s                  |\n"
-             "| Limite: %3u km/h                      |\n"
-             "| Status: %s%s%-10s%s                |\n"
-             "+========================================+\n",
-             vehicle_text,
-             ANSI_BOLD, color, data->speed_kmh, ANSI_COLOR_RESET,
-             data->speed_limit,
-             ANSI_BOLD, color, status_text, ANSI_COLOR_RESET);
+    /* Se tem placa, mostra quadro com placa; senão, sem placa */
+    if (data->plate[0] != '\0') {
+        /* Verifica se é código de erro */
+        const char *plate_color = ANSI_BOLD;
+        if (strncmp(data->plate, "ERR", 3) == 0) {
+            plate_color = ANSI_COLOR_RED;  /* Erros em vermelho */
+        }
+        
+        /* Monta strings com largura fixa ANTES de adicionar cores */
+        char vel_str[40], status_str[40], limit_str[40];
+        snprintf(vel_str, sizeof(vel_str), "%3u km/h", data->speed_kmh);
+        snprintf(status_str, sizeof(status_str), "%-10s", status_text);
+        snprintf(limit_str, sizeof(limit_str), "%3u km/h", data->speed_limit);
+        
+        snprintf(display_buffer, sizeof(display_buffer),
+                 "\n"
+                 "+========================================+\n"
+                 "|        RADAR ELETRONICO                |\n"
+                 "+========================================+\n"
+                 "| Tipo:       %-27s|\n"
+                 "| Velocidade: %s%s%-27s%s|\n"
+                 "| Limite:     %-27s|\n"
+                 "| Status:     %s%s%-27s%s|\n"
+                 "| Placa:      %s%-27s%s|\n"
+                 "+========================================+\n",
+                 vehicle_text,
+                 ANSI_BOLD, color, vel_str, ANSI_COLOR_RESET,
+                 limit_str,
+                 ANSI_BOLD, color, status_str, ANSI_COLOR_RESET,
+                 plate_color, data->plate, ANSI_COLOR_RESET);
+    } else {
+        /* Monta strings com largura fixa ANTES de adicionar cores */
+        char vel_str[40], status_str[40], limit_str[40];
+        snprintf(vel_str, sizeof(vel_str), "%3u km/h", data->speed_kmh);
+        snprintf(status_str, sizeof(status_str), "%-10s", status_text);
+        snprintf(limit_str, sizeof(limit_str), "%3u km/h", data->speed_limit);
+        
+        snprintf(display_buffer, sizeof(display_buffer),
+                 "\n"
+                 "+========================================+\n"
+                 "|        RADAR ELETRONICO                |\n"
+                 "+========================================+\n"
+                 "| Tipo:       %-27s|\n"
+                 "| Velocidade: %s%s%-27s%s|\n"
+                 "| Limite:     %-27s|\n"
+                 "| Status:     %s%s%-27s%s|\n"
+                 "+========================================+\n",
+                 vehicle_text,
+                 ANSI_BOLD, color, vel_str, ANSI_COLOR_RESET,
+                 limit_str,
+                 ANSI_BOLD, color, status_str, ANSI_COLOR_RESET);
+    }
     
     /* Exibe no console (Display Dummy mostra via LOG) */
     printk("%s", display_buffer);
     
-    /* Log adicional para clareza */
-    LOG_INF("%sVeiculo %s: %u km/h (Limite: %u) - Status: %s%s",
-            color, vehicle_text, data->speed_kmh, 
-            data->speed_limit, status_text, ANSI_COLOR_RESET);
+    /* Pequeno delay para separar visualmente do próximo processamento */
+    k_msleep(20);
 }
 
 /**
